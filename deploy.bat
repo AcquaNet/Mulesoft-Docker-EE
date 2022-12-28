@@ -1,0 +1,1 @@
+mvn deploy:deploy-file -DgroupId=com.mule -DartifactId=mule-ee-distribution-standalone -Dversion=4.4.0 -DrepositoryId=acquanet-central -Dpackaging=tar.gz -Dfile=mule-ee-distribution-standalone-4.4.0-20221111.tar.gz -Durl=http://157.245.236.175:8081/artifactory/libs-release

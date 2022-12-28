@@ -1,0 +1,1 @@
+docker run --rm -m 1g --name mule-ee-service -p 8081:8081 mule-ee
