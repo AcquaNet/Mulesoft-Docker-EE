@@ -6,36 +6,37 @@ LABEL maintainer=javier.godino@acqua.net.ar
 # ===============================================================================
 # Define environment variables.
 # ===============================================================================
+#
+# -4.4.0-20221111
+#
 ENV BASE_INSTALL_DIR=/opt \
-   MULE_BASE=/opt/mule \
    MULE_HOME=/opt/mule \
    MULE_REPOSITORY=http://157.245.236.175:8081/artifactory/libs-release \
    MULE_USER=mule \
    MULE_MD5SUM='419553149ed6c42c30254b1a1fa26f02' \
+   MULE_FILE_STANDALONE_NAME=mule-enterprise-standalone \
    MULE_FILE_DISTRIBUTION_NAME=mule-ee-distribution-standalone \
    MULE_VERSION=4.4.0 \
+   MULE_VERSION_COMP=4.4.0-20221111 \
    TZ=Europe/Madrid \
    MULE_LICENSE=license.lic
 
 # ===============================================================================
 # COPY Components
 # ===============================================================================
-COPY ./mule ${BASE_INSTALL_DIR}/mule-standalone-${MULE_VERSION}/
-  
+COPY ./mule ${BASE_INSTALL_DIR}/${MULE_FILE_STANDALONE_NAME}-${MULE_VERSION_COMP}/
+
+RUN echo "**********************************************************************"
+RUN echo "${BASE_INSTALL_DIR}/${MULE_FILE_STANDALONE_NAME}-${MULE_VERSION_COMP}"
+RUN echo "**********************************************************************"
+
 # ===============================================================================
 # Create Mule group and user
 # =============================================================================== 
 RUN groupadd -r ${MULE_USER} && useradd -r -m -c "Mule runtime user" ${MULE_USER} -g ${MULE_USER} && \
-    chown -R ${MULE_USER}:${MULE_USER} ${BASE_INSTALL_DIR}/mule-standalone-${MULE_VERSION} && \
-    ln -s ${BASE_INSTALL_DIR}/mule-standalone-${MULE_VERSION} ${MULE_HOME} 
-# ===============================================================================
-# Create Directories
-# =============================================================================== 
-
-RUN mkdir /opt/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION} && \
-    ln -s /opt/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION} ${MULE_HOME} && \
-    chown ${MULE_USER}:${MULE_USER} -R /opt/mule*
-
+    chown -R ${MULE_USER}:${MULE_USER} ${BASE_INSTALL_DIR}/${MULE_FILE_STANDALONE_NAME}-${MULE_VERSION_COMP} && \
+    ln -s ${BASE_INSTALL_DIR}/${MULE_FILE_STANDALONE_NAME}-${MULE_VERSION_COMP} ${MULE_HOME} 
+  
 # ===============================================================================
 # Ponemos la zona horaria correctamente
 # ===============================================================================
@@ -49,19 +50,24 @@ RUN echo ${TZ} > /etc/timezone
 USER ${MULE_USER}
 
 # ===============================================================================
-# Download Mule
+# Download mule-standalone
 # ===============================================================================
-RUN cd ~ && \
-    curl -O ${MULE_REPOSITORY}/com/mule/${MULE_FILE_DISTRIBUTION_NAME}/${MULE_VERSION}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
+RUN set -ex && \
+    cd ~ && \ 
+	curl -O ${MULE_REPOSITORY}/com/mule/${MULE_FILE_DISTRIBUTION_NAME}/${MULE_VERSION}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
 	echo "${MULE_MD5SUM}  ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz" | md5sum -c
-	
+
+RUN echo "**********************************************************************"
+RUN ls -R ~
+RUN echo "**********************************************************************"
+RUN ls -R ${BASE_INSTALL_DIR}
+RUN echo "**********************************************************************"
 # ===============================================================================
 # Install mule-standalone
 # ===============================================================================
 RUN set -ex && \
-    cd ${BASE_INSTALL_DIR} && \
-	mv ${BASE_INSTALL_DIR}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz ~/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
-    tar -xvzf ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz -C ${BASE_INSTALL_DIR} && \
+    cd ~ && \ 
+	tar -xvzf ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz -C ${BASE_INSTALL_DIR} && \
     mv ${MULE_HOME}/conf/log4j2.xml ${MULE_HOME}/conf/log4j2.xml.default && \
     mv ${MULE_HOME}/conf/mule-container-log4j2.xml ${MULE_HOME}/conf/log4j2.xml && \
     rm ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
@@ -73,7 +79,7 @@ RUN set -ex && \
 
 CMD echo "------ Copy and install license --------"
 COPY $MULE_LICENSE $MULE_HOME/conf/
-RUN $MULE_HOME/bin/mule -installLicense $MULE_HOME/conf/$MULE_LICENSE
+#RUN $MULE_HOME/bin/mule -installLicense $MULE_HOME/conf/$MULE_LICENSE
 
 # ===============================================================================
 #Copy and deploy mule application in runtime
