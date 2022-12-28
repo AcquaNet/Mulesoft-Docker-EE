@@ -14,44 +14,57 @@ ENV BASE_INSTALL_DIR=/opt \
    MULE_MD5SUM='419553149ed6c42c30254b1a1fa26f02' \
    MULE_FILE_DISTRIBUTION_NAME=mule-ee-distribution-standalone \
    MULE_VERSION=4.4.0 \
+   TZ=Europe/Madrid \
    MULE_LICENSE=license.lic
 
 # ===============================================================================
 # COPY Components
 # ===============================================================================
 COPY ./mule ${BASE_INSTALL_DIR}/mule-standalone-${MULE_VERSION}/
-# ===============================================================================
-# Install additional components
-# ===============================================================================
-
-# ===============================================================================
-# Download Mule
-# ===============================================================================
-RUN set -ex && \
-    cd ${BASE_INSTALL_DIR} && \
-    curl -O ${MULE_REPOSITORY}/com/mule/${MULE_FILE_DISTRIBUTION_NAME}/${MULE_VERSION}/mule-ee-distribution-standalone-${MULE_VERSION}.tar.gz && \
-	echo "${MULE_MD5SUM}  ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz" | md5sum -c
-	
+  
 # ===============================================================================
 # Create Mule group and user
 # =============================================================================== 
 RUN groupadd -r ${MULE_USER} && useradd -r -m -c "Mule runtime user" ${MULE_USER} -g ${MULE_USER} && \
-    chown -R ${MULE_USER}:${MULE_USER} ${BASE_INSTALL_DIR}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
-    ln -s ${BASE_INSTALL_DIR}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION} ${MULE_HOME} 
+    chown -R ${MULE_USER}:${MULE_USER} ${BASE_INSTALL_DIR}/mule-standalone-${MULE_VERSION} && \
+    ln -s ${BASE_INSTALL_DIR}/mule-standalone-${MULE_VERSION} ${MULE_HOME} 
+# ===============================================================================
+# Create Directories
+# =============================================================================== 
 
+RUN mkdir /opt/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION} && \
+    ln -s /opt/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION} ${MULE_HOME} && \
+    chown ${MULE_USER}:${MULE_USER} -R /opt/mule*
+
+# ===============================================================================
+# Ponemos la zona horaria correctamente
+# ===============================================================================
+# 
+RUN echo ${TZ} > /etc/timezone
+
+# ===============================================================================
 # Default user
+# ===============================================================================
+# 
 USER ${MULE_USER}
 
+# ===============================================================================
+# Download Mule
+# ===============================================================================
+RUN cd ~ && \
+    curl -O ${MULE_REPOSITORY}/com/mule/${MULE_FILE_DISTRIBUTION_NAME}/${MULE_VERSION}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
+	echo "${MULE_MD5SUM}  ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz" | md5sum -c
+	
 # ===============================================================================
 # Install mule-standalone
 # ===============================================================================
 RUN set -ex && \
-    cd ~ && \
+    cd ${BASE_INSTALL_DIR} && \
 	mv ${BASE_INSTALL_DIR}/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz ~/${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
-    tar -xzf ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz -C ${BASE_INSTALL_DIR} && \
+    tar -xvzf ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz -C ${BASE_INSTALL_DIR} && \
     mv ${MULE_HOME}/conf/log4j2.xml ${MULE_HOME}/conf/log4j2.xml.default && \
     mv ${MULE_HOME}/conf/mule-container-log4j2.xml ${MULE_HOME}/conf/log4j2.xml && \
-    rm mule-standalone-${MULE_VERSION}.tar.gz && \
+    rm ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
     rm -rf ${MULE_HOME}/lib/launcher ${MULE_HOME}/lib/boot/exec ${MULE_HOME}/lib/boot/libwrapper-* ${MULE_HOME}/lib/boot/wrapper-windows-x86-32.dll   
 
 # ===============================================================================
