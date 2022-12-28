@@ -10,7 +10,7 @@ LABEL maintainer=javier.godino@acqua.net.ar
 # -4.4.0-20221111
 #
 ENV BASE_INSTALL_DIR=/opt \
-   MULE_HOME=/opt/mule \
+   MULE_HOME=/opt/mule-enterprise-standalone-4.4.0-20221111 \
    MULE_REPOSITORY=http://157.245.236.175:8081/artifactory/libs-release \
    MULE_USER=mule \
    MULE_MD5SUM='419553149ed6c42c30254b1a1fa26f02' \
@@ -25,11 +25,7 @@ ENV BASE_INSTALL_DIR=/opt \
 # COPY Components
 # ===============================================================================
 COPY ./mule ${BASE_INSTALL_DIR}/${MULE_FILE_STANDALONE_NAME}-${MULE_VERSION_COMP}/
-
-RUN echo "**********************************************************************"
-RUN echo "${BASE_INSTALL_DIR}/${MULE_FILE_STANDALONE_NAME}-${MULE_VERSION_COMP}"
-RUN echo "**********************************************************************"
-
+ 
 # ===============================================================================
 # Create Mule group and user
 # =============================================================================== 
@@ -70,8 +66,7 @@ RUN set -ex && \
 	tar -xvzf ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz -C ${BASE_INSTALL_DIR} && \
     mv ${MULE_HOME}/conf/log4j2.xml ${MULE_HOME}/conf/log4j2.xml.default && \
     mv ${MULE_HOME}/conf/mule-container-log4j2.xml ${MULE_HOME}/conf/log4j2.xml && \
-    rm ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz && \
-    rm -rf ${MULE_HOME}/lib/launcher ${MULE_HOME}/lib/boot/exec ${MULE_HOME}/lib/boot/libwrapper-* ${MULE_HOME}/lib/boot/wrapper-windows-x86-32.dll   
+    rm ${MULE_FILE_DISTRIBUTION_NAME}-${MULE_VERSION}.tar.gz
 
 # ===============================================================================
 # Copy and install license
@@ -79,7 +74,8 @@ RUN set -ex && \
 
 CMD echo "------ Copy and install license --------"
 COPY $MULE_LICENSE $MULE_HOME/conf/
-#RUN $MULE_HOME/bin/mule -installLicense $MULE_HOME/conf/$MULE_LICENSE
+RUN $MULE_HOME/bin/mule -installLicense $MULE_HOME/conf/$MULE_LICENSE
+RUN $MULE_HOME/bin/mule -verifyLicense
 
 # ===============================================================================
 #Copy and deploy mule application in runtime
@@ -139,5 +135,7 @@ EXPOSE 54327
 # ===============================================================================
 # Start Mule runtime
 # ===============================================================================
+WORKDIR ${MULE_HOME}
 ENTRYPOINT ["./bin/mule-container"]
 CMD [""]
+#CMD ["/opt/mule-enterprise-standalone-4.4.0-20221111/bin/mule", "-M-Dmule.agent.enabled=false"]
